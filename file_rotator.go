@@ -61,7 +61,7 @@ func NewFileRotator(path string, level int, size int64, interval time.Duration, 
 	return fileRotator
 }
 
-// Func - 设置Logger级别
+// 设置Logger级别
 func (this *FileRotator) setLogLevel(file *os.File, level int) {
 	switch {
 	case level >= LOG_LEVEL_DEBUG:
@@ -94,7 +94,7 @@ func (this *FileRotator) setLogLevel(file *os.File, level int) {
 	}
 }
 
-// Func - 获取TLog文件大小
+// 获取TLog文件大小
 func (this *FileRotator) getFileSize() int64 {
 	this.RLock()
 	defer this.RUnlock()
@@ -110,7 +110,7 @@ func (this *FileRotator) getFileSize() int64 {
 	return fi.Size()
 }
 
-// Func - 截断并重命名超过Interval的Log文件
+// 截断并重命名超过Interval的Log文件
 func (this *FileRotator) truncFile(filepath, ext string) {
 	this.Lock()
 	defer this.Unlock()
@@ -143,19 +143,26 @@ func (this *FileRotator) truncFile(filepath, ext string) {
 	this._file = file
 }
 
-// Func - 生成Logg文件后缀
-func suffix(t time.Time) string {
+// 生成Logg文件后缀
+func suffix(t time.Time, duration time.Duration) string {
 	year, month, day := t.Date()
 
-	return "-" + fmt.Sprintf("%04d%02d%02d%02d", year, month, day, t.Hour())
+	// 支持按照天/小时/分钟切割
+	if duration%(24*time.Hour) == 0 {
+		return "-" + fmt.Sprintf("%04d%02d%02d", year, month, day)
+	} else if duration%time.Hour == 0 {
+		return "-" + fmt.Sprintf("%04d%02d%02d%02d", year, month, day, t.Hour())
+	}
+
+	return "-" + fmt.Sprintf("%04d%02d%02d%02d%02d", year, month, day, t.Hour(), t.Minute())
 }
 
-// Func - 截断获得下一次指定时间段的时间
+// 截断获得下一次指定时间段的时间
 func toNextBound(duration time.Duration) time.Duration {
 	return time.Now().Truncate(duration).Add(duration).Sub(time.Now())
 }
 
-// Func - Log监听处理函数
+// Log监听处理函数
 func (this *FileRotator) monitorFile() error {
 	interval := time.After(toNextBound(this._rotate._interval))
 	expired := time.After(LOG_CHECK_EXPIRED)
@@ -183,7 +190,7 @@ func (this *FileRotator) monitorFile() error {
 			// 自定义生成新的Logger文件
 			interval = time.After(this._rotate._interval)
 
-			this.truncFile(fp, suffix(t))
+			this.truncFile(fp, suffix(t, this._rotate._interval))
 			sizeExt = 1
 
 			_std_info.Printf("monitor file info (truncated by interval).\n")
@@ -218,7 +225,7 @@ func (this *FileRotator) monitorFile() error {
 				break
 			}
 
-			this.truncFile(fp, suffix(t)+"."+strconv.Itoa(sizeExt))
+			this.truncFile(fp, suffix(t, this._rotate._interval)+"."+strconv.Itoa(sizeExt))
 
 			sizeExt++
 
@@ -227,7 +234,7 @@ func (this *FileRotator) monitorFile() error {
 	}
 }
 
-// Func - 输出Debug日志
+// 输出Debug日志
 func (this *FileRotator) Debug(format string, v ...interface{}) {
 	this.RLock()
 	defer this.RUnlock()
@@ -237,7 +244,7 @@ func (this *FileRotator) Debug(format string, v ...interface{}) {
 	}
 }
 
-// Func - 输出Info日志
+// 输出Info日志
 func (this *FileRotator) Info(format string, v ...interface{}) {
 	this.RLock()
 	defer this.RUnlock()
@@ -247,7 +254,7 @@ func (this *FileRotator) Info(format string, v ...interface{}) {
 	}
 }
 
-// Func - 输出Warn日志
+// 输出Warn日志
 func (this *FileRotator) Warn(format string, v ...interface{}) {
 	_std_warn.Output(3, fmt.Sprintln(fmt.Sprintf(format, v...)))
 
@@ -259,7 +266,7 @@ func (this *FileRotator) Warn(format string, v ...interface{}) {
 	}
 }
 
-// Func - 输出Error日志
+// 输出Error日志
 func (this *FileRotator) Error(format string, v ...interface{}) {
 	_std_error.Output(3, fmt.Sprintln(fmt.Sprintf(format, v...)))
 
@@ -271,7 +278,7 @@ func (this *FileRotator) Error(format string, v ...interface{}) {
 	}
 }
 
-// Func - 输出Error日志
+// 输出原始日志
 func (this *FileRotator) Raw(format string, v ...interface{}) {
 	_std_raw.Output(3, fmt.Sprintln(fmt.Sprintf(format, v...)))
 
