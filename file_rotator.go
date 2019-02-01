@@ -34,7 +34,16 @@ type rotate struct {
 	_expired  time.Duration
 }
 
+// interval: 支持10分钟/半小时/小时/天
+// expired: 日志过期时间, 每小时检查一次
 func NewFileRotator(path string, level int, size int64, interval time.Duration, expired time.Duration) *FileRotator {
+	if interval != INTERVAL_TYPE_TEN_MINUTE && interval != INTERVAL_TYPE_HALF_HOUR &&
+		interval != INTERVAL_TYPE_HOUR && interval != INTERVAL_TYPE_DAY {
+		_std_error.Fatalf("new file rotator (%v) err (interval illegal).\n", interval)
+
+		return nil
+	}
+
 	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 
 	if err != nil {
@@ -159,6 +168,18 @@ func suffix(t time.Time, duration time.Duration) string {
 
 // 截断获得下一次指定时间段的时间
 func toNextBound(duration time.Duration) time.Duration {
+	if duration == INTERVAL_TYPE_DAY {
+		curTime := time.Now()
+
+		curYear := curTime.Year()
+		curMonth := curTime.Month()
+		curDay := curTime.Day()
+
+		curStartTime := time.Date(curYear, curMonth, curDay, 0, 0, 0, 0, time.Local)
+
+		return curStartTime.Add(duration).Sub(curTime)
+	}
+
 	return time.Now().Truncate(duration).Add(duration).Sub(time.Now())
 }
 

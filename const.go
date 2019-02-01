@@ -26,8 +26,15 @@ const (
 )
 
 const (
-	LOG_CHECK_INTERVAL = 2 * time.Minute
-	LOG_CHECK_EXPIRED  = 2 * time.Hour
+	LOG_CHECK_INTERVAL = time.Minute * 2
+	LOG_CHECK_EXPIRED  = time.Hour
+)
+
+const (
+	INTERVAL_TYPE_TEN_MINUTE = time.Minute * 10
+	INTERVAL_TYPE_HALF_HOUR  = time.Minute * 30
+	INTERVAL_TYPE_HOUR       = time.Hour
+	INTERVAL_TYPE_DAY        = time.Hour * 24
 )
 
 var (
