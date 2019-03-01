@@ -301,8 +301,7 @@ func (this *FileRotator) Error(format string, v ...interface{}) {
 
 // 输出原始日志
 func (this *FileRotator) Raw(format string, v ...interface{}) {
-	_std_raw.Output(3, fmt.Sprintln(fmt.Sprintf(format, v...)))
-
+	// _std_raw.Output(3, fmt.Sprintln(fmt.Sprintf(format, v...)))
 	this.RLock()
 	defer this.RUnlock()
 
